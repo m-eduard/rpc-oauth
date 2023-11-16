@@ -1,14 +1,14 @@
 SERVICE="oauth"
 
 # find ./ -name '*[^.x]' -delete
-make -f "Makefile.$SERVICE" clean
+make -f "makefile" clean
 
 # Override the current makefile
-rm -f "Makefile.$SERVICE"
+rm -f "makefile"
 rpcgen -NC "$SERVICE.x"
-cp "../valid_makefile" "Makefile.$SERVICE"
+cp "../valid_makefile" "makefile"
 
 cp -r "../tests" ./
 cp "../check.sh" ./
 
-# make -f "Makefile.$SERVICE"
+# make -f "makefile"
