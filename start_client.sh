@@ -1,0 +1,3 @@
+OPERATIONS_FILE=""
+
+./client "$OPERATIONS_FILE"

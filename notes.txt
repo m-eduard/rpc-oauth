@@ -1,0 +1,75 @@
+# Server autorizare
+
+- incarca in memorie identificatorii userilor (astia sunt luati frumos
+  dintr-un fisier al carui nume e trimis ca parametru la start)
+- retine seturile de permisiuni ale userilor
+- retine informatii despre jetoanele de acces autorizate pt aplicatii
+  terte
+
+* request <authorization>
+  - primeste ID-ul userului
+  - verifica in DB existenta userului, iar daca exista intoarce
+    un token pentru autorizarea cererii de acces la resurse
+    (altfel eroarea USER_NOT_FOUND)
+* request <access token>
+  - primeste ID-ul userului si token-ul pentru autorizarea cererii de acces
+    (care trebuie sa fie deja autorizat de user)
+  - daca tokenul primit nu e deja autorizar, intoare eroarea
+    REQUEST_DENIED
+  - daca tokenul e valid, asociaza noul token de access la resurse cu userul
+    in DB, pentru ca un user e asociat la un moment dat cu un singur token activ
+    si intoarce un token de acces la resurse (presupun ca e vb de token-ul
+    mentionat mai devreme, un token pt regenerarea celui de acces si o perioada
+    de valabilitate)
+
+
+# Server resurse
+
+- astea sunt resursele care rezida pe server, si pentru care userul incearca
+  sa foloseasca tokenii ca sa le gestioneze
+- RESURSELE DISPONIBILE O SA FIE INCARCATE DINTR-UN FISIER TEXT
+
+* validate <Delegated Action>
+  - primeste de la user:
+    - tipul operatieii
+    - resursa accesata
+    - tokenul de acces
+  - verifica daca:
+    - tokenul de acces e asociat cu id-ul userului | PERMISSION_DENIED
+    - valabilitateea tokenului | TOKEN_EXPIRED
+    - resursa exista | RESOURCE_NOT_FOUND
+    - operatia e permisa prin token | OPERATION_NOT_PERMITTED
+    - PERMISSION_GRANTED, daca nu a picat nimic
+
+
+# User final
+
+* approve <Request Token>
+  - primeste tokenul de autorizare a cererii de acces
+  - ataseaza setul de permisiuni pentru fiecare resursa de pe server
+  - marcheaza jetonul ca fiind semnat??
+  - daca userul nu aproba cererea de schimbare a datelor, intoarce
+    jetonul neschimbat
+
+- raspunsurile sunt incarcate dintr-un csv la pornirea serverului,
+  iar ordinea in care vor fi servite clientilor este FIFO
+
+
+# Client
+
+- citeste dintr-un CSV operatii si le executa in ordine FIFO
+- in timpul executiei trebuie sa foloseasca modelul OAuth pentru autorizarea
+  operatiilor
+- doua tipuri de operatii:
+  - cerere de generare a unui token de acces
+  - operatii asupra resurselor de pe server
+
+Cand clientul cere un token de acces, permisiunile vor fi configurate
+conform datelor stocate de userul final
+
+
+
+OBSERVATII:
+- f(UserID)           = token autorizare cerere de acces
+- f(token autorizare) = token de acces
+- f(token de acces)   = token de refresh

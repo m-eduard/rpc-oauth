@@ -1,0 +1,14 @@
+struct REQUEST_AUTHORIZATION_PROPS {
+    string CLIENT_ID<15>;
+};
+
+struct REQUEST_ACCESSTOKEN_PROPS {
+    string CLIENT_ID<15>;
+    string AUTHORIZATIION_TOKEN<>;
+};
+
+program OAUTH_PROG {
+    version OAUTH_VERS {
+        string REQUEST_AUTHORIZATION(REQUEST_AUTHORIZATION_PROPS) = 1;
+    } = 1;
+} = 0x31234567;
