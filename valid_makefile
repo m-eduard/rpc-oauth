@@ -11,15 +11,17 @@ SOURCES_SVC.c =
 SOURCES_SVC.h = 
 SOURCES.x = oauth.x
 
-TARGETS_SVC.c = oauth_svc.c oauth_server.c oauth_xdr.c 
+TARGETS_SVC.c = oauth_svc.c oauth_xdr.c 
+TARGETS_SVC.cpp = oauth_server.cpp
 TARGETS_CLNT.c = oauth_clnt.c oauth_client.c oauth_xdr.c 
-TARGETS = oauth.h oauth_xdr.c oauth_clnt.c oauth_svc.c oauth_client.c oauth_server.c
+TARGETS = oauth.h oauth_xdr.c oauth_clnt.c oauth_svc.c oauth_client.c oauth_server.cpp
 
 OBJECTS_CLNT = $(SOURCES_CLNT.c:%.c=%.o) $(TARGETS_CLNT.c:%.c=%.o)
-OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o)
+OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o) $(TARGETS_SVC.cpp:%.cpp=%.o)
 # Compiler flags 
 
 CFLAGS += -g -I/usr/include/tirpc
+CXXFLAGS += -g -I/usr/include/tirpc
 LDLIBS += -lnsl -ltirpc
 RPCGENFLAGS = -NC
 
