@@ -13,10 +13,11 @@ SOURCES.x = oauth.x
 
 TARGETS_SVC.c = oauth_xdr.c 
 TARGETS_SVC.cpp = oauth_server.cpp oauth_svc.cpp
-TARGETS_CLNT.c = oauth_clnt.c oauth_client.c oauth_xdr.c 
-TARGETS = oauth.h oauth_xdr.c oauth_clnt.c oauth_svc.cpp oauth_client.c oauth_server.cpp
+TARGETS_CLNT.c = oauth_clnt.c oauth_xdr.c
+TARGETS_CLNT.cpp = oauth_client.cpp
+TARGETS = oauth.h oauth_xdr.c oauth_clnt.c oauth_svc.cpp oauth_client.cpp oauth_server.cpp
 
-OBJECTS_CLNT = $(SOURCES_CLNT.c:%.c=%.o) $(TARGETS_CLNT.c:%.c=%.o)
+OBJECTS_CLNT = $(SOURCES_CLNT.c:%.c=%.o) $(TARGETS_CLNT.c:%.c=%.o) $(TARGETS_CLNT.cpp:%.cpp=%.o)
 OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o) $(TARGETS_SVC.cpp:%.cpp=%.o)
 # Compiler flags 
 
@@ -34,9 +35,6 @@ RPCGENFLAGS = -NC
 # Targets 
 
 all : $(CLIENT) $(SERVER)
-
-$(TARGETS) : $(SOURCES.x) 
-	rpcgen $(RPCGENFLAGS) $(SOURCES.x)
 
 $(OBJECTS_CLNT) : $(SOURCES_CLNT.c) $(SOURCES_CLNT.h) $(TARGETS_CLNT.c) 
 
