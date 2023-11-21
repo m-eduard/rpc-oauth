@@ -28,7 +28,7 @@ struct request_authorization_props {
 
 /* REQUEST_AUTHORIZATION returns an auth token if the user who requested the
  * the token exists in the Users DB on the server side */
-union request_authorization_res switch (int errno) {
+union request_authorization_res switch (int err) {
 	case 0:
 		token_t token;      /* no error: return the authorization token */
 	default:
@@ -44,7 +44,7 @@ struct approve_request_token_props {
 
 /* APPROVE_REQUEST_TOKEN returns the permissions that are associated with the
  * current authorization request token, otherwise an error */
-union approve_request_token_res switch (int errno) {
+union approve_request_token_res switch (int err) {
     case 0:
         string permissions<>;
     default:
@@ -60,7 +60,7 @@ struct request_access_token_props {
 
 /* REQUEST_ACCESS_TOKEN returns an access token and a refresh token if the
  * received authorization token is signed, otherwise an error */
-union request_access_token_res switch (int errno) {
+union request_access_token_res switch (int err) {
     case 0:
         bearer_tokens_t tokens;
     default:
@@ -76,7 +76,7 @@ struct refresh_tokens_props {
 
 /* REFRESH_TOKENS returns a new access token and a new refresh token
  * if the received authorization token is signed, otherwise an error */
-union refresh_tokens_res switch (int errno) {
+union refresh_tokens_res switch (int err) {
     case 0:
         bearer_tokens_t tokens;
     default:
