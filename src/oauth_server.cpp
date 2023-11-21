@@ -1,5 +1,8 @@
 #include "oauth.h"
 #include "oauth_server.h"
+#include "token.h"
+#include "utils.h"
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <string>
@@ -13,47 +16,7 @@
 std::unordered_set<std::string> users;
 std::unordered_set<std::string> resources;
 std::vector<std::unordered_map<std::string, std::string>> approvals;
-
-void get_lines_from_file(char *file, bool has_num_lines, std::vector<std::string> &lines) {
-	char buffer[1024] = {0};
-	int num_lines = 0;
-	int buffer_pos = 0;
-
-	int fd = open(file, O_RDONLY);
-	if (fd < 0) {
-		printf("Error opening %s\n", file);
-	}
-
-	read(fd, buffer, 1024);
-
-	if (has_num_lines) {
-		num_lines = atoi(buffer);
-		buffer_pos = strchr(buffer, '\n') - buffer + 1;
-	}
-
-	do {
-		for (int i = buffer_pos; i < sizeof(buffer); ++i) {
-			if (buffer[i] == '\n') {
-				lines.push_back(std::string(buffer + buffer_pos, i - buffer_pos));
-
-				if (has_num_lines) num_lines--;
-
-				buffer_pos = i + 1;
-			}
-		}
-
-		// Check if the file ended without '\n'
-		if (has_num_lines) {
-			if (num_lines > 0)
-				lines.push_back(std::string(buffer + buffer_pos));
-		} else {
-			if (buffer_pos < sizeof(buffer))
-				lines.push_back(std::string(buffer + buffer_pos));
-		}
-
-		buffer_pos = 0;
-	} while (read(fd, buffer, 1024) > 0);
-}
+int tokens_validity;
 
 void server_init(server_init_props *props) {
 	std::vector<std::string> clients_lines;
@@ -98,17 +61,22 @@ void server_init(server_init_props *props) {
 			permission.clear();
 		}
 	}
+
+	tokens_validity = props->tokens_validity;
 }
 
 
 request_authorization_res *
 request_authorization_1_svc(request_authorization_props arg1,  struct svc_req *rqstp)
 {
-	static request_authorization_res  result;
+	static request_authorization_res result;
 
-	/*
-	 * insert server code here
-	 */
+	if (users.find(arg1.client_id) == users.end()) {
+		result.err = USER_NOT_FOUND;
+	} else {
+		result.err = 0;
+		result.request_authorization_res_u.token = generate_access_token(arg1.client_id);
+	}
 
 	return &result;
 }
