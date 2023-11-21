@@ -13,17 +13,24 @@
 #include <iostream>
 
 // In-memory databases
-std::unordered_set<std::string> users;
+std::unordered_map<std::string, user_data> users;
 std::unordered_set<std::string> resources;
 std::vector<std::unordered_map<std::string, std::string>> approvals;
+
 int tokens_validity;
+int approvals_index = 0;
 
 void server_init(server_init_props *props) {
 	std::vector<std::string> clients_lines;
 	get_lines_from_file(props->clients_file, true, clients_lines);
 
 	for (int i = 0; i < clients_lines.size(); ++i) {
-		users.insert(clients_lines[i]);
+		users[clients_lines[i]] = (user_data) {
+			.authorization_token = 0,
+			.access_token = 0,
+			.refresh_token = 0,
+			.num_operations = tokens_validity
+		};
 	}
 
 	std::vector<std::string> resources_lines;
@@ -76,6 +83,9 @@ request_authorization_1_svc(request_authorization_props arg1,  struct svc_req *r
 	} else {
 		result.err = 0;
 		result.request_authorization_res_u.token = generate_access_token(arg1.client_id);
+
+		users[arg1.client_id].authorization_token = result.request_authorization_res_u.token;
+		users[arg1.client_id].auto_refresh = arg1.auto_refresh;
 	}
 
 	return &result;
@@ -86,9 +96,7 @@ approve_request_token_1_svc(approve_request_token_props arg1,  struct svc_req *r
 {
 	static approve_request_token_res  result;
 
-	/*
-	 * insert server code here
-	 */
+	approvals_index += 1;
 
 	return &result;
 }

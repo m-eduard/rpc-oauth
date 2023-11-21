@@ -34,7 +34,24 @@ oauth_prog_1(char *host)
 
 	for (int i = 0; i < operations.size(); ++i) {
 		if (operations[i].action == REQUEST) {
-			
+			result_1 = request_authorization_1((request_authorization_props) {
+				.client_id = (char *) operations[i].user_id.c_str(),
+				.auto_refresh = operations[i].automatic_refresh,
+			}, clnt);
+
+			std::cout << "Called for: " << operations[i].user_id << std::endl;
+
+			if (result_1 == (request_authorization_res *) NULL) {
+				clnt_perror (clnt, "call failed");
+			} else {
+				if (result_1->err == 0) {
+					std::cout << result_1->request_authorization_res_u.token << std::endl;
+				} else if (result_1->err == USER_NOT_FOUND) {
+					std::cout << MACRO_RAW(USER_NOT_FOUND) << std::endl;
+				}
+
+				// 
+			}
 		} else {
 			if (operations[i].action == READ) {
 
@@ -50,10 +67,7 @@ oauth_prog_1(char *host)
 		}
 	}
 
-	// result_1 = request_authorization_1(request_authorization_1_arg1, clnt);
-	// if (result_1 == (request_authorization_res *) NULL) {
-	// 	clnt_perror (clnt, "call failed");
-	// }
+	
 	// result_2 = approve_request_token_1(approve_request_token_1_arg1, clnt);
 	// if (result_2 == (approve_request_token_res *) NULL) {
 	// 	clnt_perror (clnt, "call failed");
