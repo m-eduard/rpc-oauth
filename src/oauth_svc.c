@@ -43,7 +43,7 @@ _refresh_tokens_1 (refresh_tokens_props  *argp, struct svc_req *rqstp)
 }
 
 static validate_delegated_action_res *
-_validate_delegated_action_1 (validate_delegated_action_res  *argp, struct svc_req *rqstp)
+_validate_delegated_action_1 (validate_delegated_action_props  *argp, struct svc_req *rqstp)
 {
 	return (validate_delegated_action_1_svc(*argp, rqstp));
 }

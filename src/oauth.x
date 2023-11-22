@@ -101,6 +101,6 @@ program OAUTH_PROG {
         approve_request_token_res APPROVE_REQUEST_TOKEN(approve_request_token_props) = 2;
         request_access_token_res REQUEST_ACCESS_TOKEN(request_access_token_props) = 3;
         refresh_tokens_res REFRESH_TOKENS(refresh_tokens_props) = 4;
-        validate_delegated_action_res VALIDATE_DELEGATED_ACTION(validate_delegated_action_res) = 5;
+        validate_delegated_action_res VALIDATE_DELEGATED_ACTION(validate_delegated_action_props) = 5;
     } = 1;
 } = 0x31234567;

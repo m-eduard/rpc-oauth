@@ -161,13 +161,11 @@ refresh_tokens_1_svc(refresh_tokens_props arg1,  struct svc_req *rqstp)
 }
 
 validate_delegated_action_res *
-validate_delegated_action_1_svc(validate_delegated_action_res arg1,  struct svc_req *rqstp)
+validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct svc_req *rqstp)
 {
 	static validate_delegated_action_res  result;
 
-	/*
-	 * insert server code here
-	 */
+	
 
 	return &result;
 }

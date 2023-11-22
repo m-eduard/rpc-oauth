@@ -8,8 +8,10 @@
 #include "oauth_client.h"
 #include "utils.h"
 #include <vector>
+#include <unordered_map>
 
 std::vector<operation_props> operations;
+std::unordered_map<std::string, std::string> user_to_acces_token;
 
 void
 oauth_prog_1(char *host)
@@ -34,6 +36,7 @@ oauth_prog_1(char *host)
 
 	for (int i = 0; i < operations.size(); ++i) {
 		if (operations[i].action == REQUEST) {
+			// Request an authorization token
 			result_1 = request_authorization_1((request_authorization_props) {
 				.client_id = (char *) operations[i].user_id.c_str(),
 				.auto_refresh = operations[i].automatic_refresh,
@@ -43,6 +46,8 @@ oauth_prog_1(char *host)
 				clnt_perror (clnt, "call failed");
 			} else {
 				if (result_1->err == 0) {
+					// Request for the final user to sign the authorization token
+					// with the permissions specified in "approvals.db"
 					result_2 = approve_request_token_1((approve_request_token_props) {
 						.authorization_token = result_1->request_authorization_res_u.token,
 					}, clnt);
@@ -50,6 +55,9 @@ oauth_prog_1(char *host)
 					if (result_2 == (approve_request_token_res *) NULL) {
 						clnt_perror (clnt, "call failed");
 					} else {
+						// Request for an access and an optiional refresh token
+						// (if the authorization token was generated with the
+						// automatic refresh option enabled)
 						result_3 = request_access_token_1((request_access_token_props) {
 							.client_id = (char *) operations[i].user_id.c_str(),
 							.authorization_token = result_1->request_authorization_res_u.token,
@@ -59,7 +67,10 @@ oauth_prog_1(char *host)
 							clnt_perror (clnt, "call failed");
 						} else {
 							if (result_3->err == 0) {
-								std::cout << result_1->request_authorization_res_u.token << " -> " << result_3->request_access_token_res_u.tokens.access_token << std::endl;
+								std::cout << result_1->request_authorization_res_u.token <<
+									" -> " << result_3->request_access_token_res_u.tokens.access_token << std::endl;
+								user_to_acces_token[operations[i].user_id] =
+									result_3->request_access_token_res_u.tokens.access_token;
 							} else if (result_3->err == REQUEST_DENIED) {
 								std::cout << MACRO_RAW(REQUEST_DENIED) << std::endl;
 							}
@@ -71,6 +82,14 @@ oauth_prog_1(char *host)
 				}
 			}
 		} else {
+			result_5 = validate_delegated_action_1((validate_delegated_action_props) {
+				.access_token = (char *) user_to_acces_token[operations[i].user_id].c_str(),
+			}, clnt);
+
+			if (result_5 == (validate_delegated_action_res *) NULL) {
+				clnt_perror (clnt, "call failed");
+			}
+
 			if (operations[i].action == READ) {
 
 			} else if (operations[i].action == INSERT) {
@@ -92,10 +111,7 @@ oauth_prog_1(char *host)
 	// if (result_4 == (refresh_tokens_res *) NULL) {
 	// 	clnt_perror (clnt, "call failed");
 	// }
-	// result_5 = validate_delegated_action_1(validate_delegated_action_1_arg1, clnt);
-	// if (result_5 == (validate_delegated_action_res *) NULL) {
-	// 	clnt_perror (clnt, "call failed");
-	// }
+	
 
 	clnt_destroy (clnt);
 }

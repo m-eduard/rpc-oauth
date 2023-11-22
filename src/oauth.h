@@ -105,8 +105,8 @@ extern  request_access_token_res * request_access_token_1_svc(request_access_tok
 extern  refresh_tokens_res * refresh_tokens_1(refresh_tokens_props , CLIENT *);
 extern  refresh_tokens_res * refresh_tokens_1_svc(refresh_tokens_props , struct svc_req *);
 #define VALIDATE_DELEGATED_ACTION 5
-extern  validate_delegated_action_res * validate_delegated_action_1(validate_delegated_action_res , CLIENT *);
-extern  validate_delegated_action_res * validate_delegated_action_1_svc(validate_delegated_action_res , struct svc_req *);
+extern  validate_delegated_action_res * validate_delegated_action_1(validate_delegated_action_props , CLIENT *);
+extern  validate_delegated_action_res * validate_delegated_action_1_svc(validate_delegated_action_props , struct svc_req *);
 extern int oauth_prog_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
 
 #else /* K&R C */
