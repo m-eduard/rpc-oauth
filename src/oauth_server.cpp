@@ -13,7 +13,8 @@
 #include <iostream>
 
 // In-memory databases
-std::unordered_map<std::string, user_data> users;
+std::unordered_map<std::string, user_data> users;			// user_id -> user_data
+std::unordered_map<std::string, std::string> auth_tokens;	// token -> user_id
 std::unordered_set<std::string> resources;
 std::vector<std::unordered_map<std::string, std::string>> approvals;
 
@@ -29,7 +30,9 @@ void server_init(server_init_props *props) {
 			.authorization_token = 0,
 			.access_token = 0,
 			.refresh_token = 0,
-			.num_operations = tokens_validity
+			.num_operations = tokens_validity,
+			.auto_refresh = false,
+			.authorized = false
 		};
 	}
 
@@ -86,6 +89,8 @@ request_authorization_1_svc(request_authorization_props arg1,  struct svc_req *r
 
 		users[arg1.client_id].authorization_token = result.request_authorization_res_u.token;
 		users[arg1.client_id].auto_refresh = arg1.auto_refresh;
+
+		auth_tokens[result.request_authorization_res_u.token] = arg1.client_id;
 	}
 
 	return &result;
@@ -94,8 +99,16 @@ request_authorization_1_svc(request_authorization_props arg1,  struct svc_req *r
 approve_request_token_res *
 approve_request_token_1_svc(approve_request_token_props arg1,  struct svc_req *rqstp)
 {
-	static approve_request_token_res  result;
+	static approve_request_token_res result;
 
+	// Check if the user allows the client to assume the permissions
+	// for the current token
+	result.was_signed = approvals[approvals_index][ALL] != DENY_PERMISSION;
+
+	// Store the result
+	users[auth_tokens[arg1.authorization_token]].authorized = result.was_signed;
+
+	// Update the index of the current approval in FIFO order
 	approvals_index += 1;
 
 	return &result;
@@ -106,9 +119,21 @@ request_access_token_1_svc(request_access_token_props arg1,  struct svc_req *rqs
 {
 	static request_access_token_res  result;
 
-	/*
-	 * insert server code here
-	 */
+	if (users[arg1.client_id].authorized == false) {
+		result.err = REQUEST_DENIED;
+	} else {
+		result.err = 0;
+
+		users[arg1.client_id].access_token = generate_access_token(arg1.authorization_token);
+
+		if (users[arg1.client_id].auto_refresh)
+			users[arg1.client_id].refresh_token = generate_access_token(users[arg1.client_id].access_token);
+		else
+			users[arg1.client_id].refresh_token = (char *) "";
+
+		result.request_access_token_res_u.tokens.access_token = users[arg1.client_id].access_token;
+		result.request_access_token_res_u.tokens.refresh_token = users[arg1.client_id].refresh_token;
+	}
 
 	return &result;
 }

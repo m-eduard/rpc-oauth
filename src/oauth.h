@@ -30,6 +30,7 @@ typedef struct bearer_tokens_t bearer_tokens_t;
 
 struct request_authorization_props {
 	client_id_t client_id;
+	bool_t auto_refresh;
 };
 typedef struct request_authorization_props request_authorization_props;
 
@@ -47,10 +48,7 @@ struct approve_request_token_props {
 typedef struct approve_request_token_props approve_request_token_props;
 
 struct approve_request_token_res {
-	int err;
-	union {
-		char *permissions;
-	} approve_request_token_res_u;
+	bool_t was_signed;
 };
 typedef struct approve_request_token_res approve_request_token_res;
 

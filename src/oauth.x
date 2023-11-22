@@ -21,9 +21,10 @@ struct bearer_tokens_t {
 };
 
 
-/* REQUEST_AUTHORIZATION receives only a client ID */
+/* REQUEST_AUTHORIZATION receives only a client ID and auto refresh value */
 struct request_authorization_props {
     client_id_t client_id;
+    bool auto_refresh;
 };
 
 /* REQUEST_AUTHORIZATION returns an auth token if the user who requested the
@@ -42,13 +43,11 @@ struct approve_request_token_props {
     token_t authorization_token;
 };
 
-/* APPROVE_REQUEST_TOKEN returns the permissions that are associated with the
- * current authorization request token, otherwise an error */
-union approve_request_token_res switch (int err) {
-    case 0:
-        string permissions<>;
-    default:
-        void;
+/* APPROVE_REQUEST_TOKEN returns a boolean which shows if the requested
+ * permissions were granted or not by the final user for the current
+ * authorization request token */
+struct approve_request_token_res {
+    bool was_signed;
 };
 
 

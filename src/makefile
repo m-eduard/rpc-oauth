@@ -27,8 +27,8 @@ OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o) $(TARGETS_SVC.cp
 # of unknown reference to unordered_set
 CC=g++
 
-CFLAGS += -g -I/usr/include/tirpc -std=c++11
-CXXFLAGS += -g -I/usr/include/tirpc -std=c++11
+CFLAGS += -g -I/usr/include/tirpc -std=c++14
+CXXFLAGS += -g -I/usr/include/tirpc -std=c++14
 LDLIBS += -lnsl -ltirpc
 RPCGENFLAGS = -NC
 

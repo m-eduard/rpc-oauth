@@ -28,3 +28,4 @@ struct operation_props {
  * values for these error macros would not work unless both
  * are compiled on the same machine */
 #define USER_NOT_FOUND 1
+#define REQUEST_DENIED 2

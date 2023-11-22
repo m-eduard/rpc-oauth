@@ -2,13 +2,28 @@
  *	- name of all the files needed to initialize the databases
  *  - number of operations that a token can be used until it becomes invalid
  */
-typedef struct server_init_props {
+struct server_init_props {
     char *clients_file;
     char *resources_file;
     char *permissions_file;
     int tokens_validity;
-} server_init_props;
+};
+
+struct user_data {
+    token_t authorization_token;
+    token_t access_token;
+    token_t refresh_token;
+    int num_operations;
+    bool auto_refresh;
+    bool authorized;
+};
 
 /* @param props: pointer to the files needed for initializing the DBes
  * 				 stored by the Authentication server*/
 void server_init(server_init_props *);
+
+#define ALL                 "*"
+#define DENY_PERMISSION     "-"
+
+#define USER_NOT_FOUND 1
+#define REQUEST_DENIED 2
