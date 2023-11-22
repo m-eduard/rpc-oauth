@@ -81,16 +81,23 @@ request_authorization_1_svc(request_authorization_props arg1,  struct svc_req *r
 {
 	static request_authorization_res result;
 
+	std::cout << "BEGIN " << arg1.client_id << " AUTHZ" << std::endl;
+
 	if (users.find(arg1.client_id) == users.end()) {
 		result.err = USER_NOT_FOUND;
 	} else {
 		result.err = 0;
-		result.request_authorization_res_u.token = generate_access_token(arg1.client_id);
 
-		users[arg1.client_id].authorization_token = result.request_authorization_res_u.token;
+		char *refresh_token = generate_access_token(arg1.client_id);
+
+		result.request_authorization_res_u.token = refresh_token;
+
+		users[arg1.client_id].authorization_token = refresh_token;
 		users[arg1.client_id].auto_refresh = arg1.auto_refresh;
 
-		auth_tokens[result.request_authorization_res_u.token] = arg1.client_id;
+		auth_tokens[refresh_token] = arg1.client_id;
+
+		std::cout << "  RequestToken = " << refresh_token << std::endl;
 	}
 
 	return &result;
@@ -125,11 +132,14 @@ request_access_token_1_svc(request_access_token_props arg1,  struct svc_req *rqs
 		result.err = 0;
 
 		users[arg1.client_id].access_token = generate_access_token(arg1.authorization_token);
+		std::cout << "  AccessToken = " << users[arg1.client_id].access_token << std::endl;
 
-		if (users[arg1.client_id].auto_refresh)
+		if (users[arg1.client_id].auto_refresh) {
 			users[arg1.client_id].refresh_token = generate_access_token(users[arg1.client_id].access_token);
-		else
+			std::cout << "  RefreshToken = " << users[arg1.client_id].refresh_token << std::endl;
+		} else {
 			users[arg1.client_id].refresh_token = (char *) "";
+		}
 
 		result.request_access_token_res_u.tokens.access_token = users[arg1.client_id].access_token;
 		result.request_access_token_res_u.tokens.refresh_token = users[arg1.client_id].refresh_token;

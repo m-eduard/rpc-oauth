@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cstring>
 
+#define MACRO_RAW(x) #x
+
 void get_lines_from_file(char *file, bool has_num_lines, std::vector<std::string> &lines) {
 	char buffer[1024] = {0};
 	int num_lines = 0;
