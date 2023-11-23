@@ -1,3 +1,5 @@
+// Copyright Eduard Marin, November 2023
+
 #include <string>
 
 /* struct containing:
@@ -15,11 +17,6 @@ struct operation_props {
     };
 };
 
-#define READ    "READ"
-#define INSERT  "INSERT"
-#define MODIFY  "MODIFY"
-#define DELETE  "DELETE"
-#define EXECUTE "EXECUTE"
 
 #define REQUEST "REQUEST"
 
@@ -34,3 +31,5 @@ struct operation_props {
 #define RESOURCE_NOT_FOUND 5
 #define OPERATION_NOT_PERMITTED 6
 #define PERMISSION_GRANTED 7
+#define REQUIRE_REFRESH 8
+#define INVALID_REFRESH_TOKEN 9

@@ -1,3 +1,5 @@
+// Copyright Eduard Marin, November 2023
+
 #include "oauth.h"
 #include "oauth_server.h"
 #include "token.h"

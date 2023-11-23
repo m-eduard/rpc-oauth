@@ -1,3 +1,5 @@
+// Copyright Eduard Marin, November 2023
+
 /* struct containing:
  *	- name of all the files needed to initialize the databases
  *  - number of operations that a token can be used until it becomes invalid
@@ -36,3 +38,5 @@ void server_init(server_init_props *);
 #define RESOURCE_NOT_FOUND 5
 #define OPERATION_NOT_PERMITTED 6
 #define PERMISSION_GRANTED 7
+#define REQUIRE_REFRESH 8
+#define INVALID_REFRESH_TOKEN 9
