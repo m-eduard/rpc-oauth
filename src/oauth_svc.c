@@ -13,7 +13,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-
 #ifndef SIG_PF
 #define SIG_PF void(*)(int)
 #endif
@@ -49,14 +48,14 @@ _validate_delegated_action_1 (validate_delegated_action_props  *argp, struct svc
 }
 
 static void
-oauth_prog_1(struct svc_req *rqstp, SVCXPRT *transp)
+oauth_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 {
 	union {
 		request_authorization_props request_authorization_1_arg;
 		approve_request_token_props approve_request_token_1_arg;
 		request_access_token_props request_access_token_1_arg;
 		refresh_tokens_props refresh_tokens_1_arg;
-		validate_delegated_action_res validate_delegated_action_1_arg;
+		validate_delegated_action_props validate_delegated_action_1_arg;
 	} argument;
 	char *result;
 	xdrproc_t _xdr_argument, _xdr_result;
@@ -92,7 +91,7 @@ oauth_prog_1(struct svc_req *rqstp, SVCXPRT *transp)
 		break;
 
 	case VALIDATE_DELEGATED_ACTION:
-		_xdr_argument = (xdrproc_t) xdr_validate_delegated_action_res;
+		_xdr_argument = (xdrproc_t) xdr_validate_delegated_action_props;
 		_xdr_result = (xdrproc_t) xdr_validate_delegated_action_res;
 		local = (char *(*)(char *, struct svc_req *)) _validate_delegated_action_1;
 		break;
@@ -120,7 +119,7 @@ oauth_prog_1(struct svc_req *rqstp, SVCXPRT *transp)
 int
 main (int argc, char **argv)
 {
-	SVCXPRT *transp;
+	register SVCXPRT *transp;
 
 	pmap_unset (OAUTH_PROG, OAUTH_VERS);
 
@@ -142,11 +141,6 @@ main (int argc, char **argv)
 	if (!svc_register(transp, OAUTH_PROG, OAUTH_VERS, oauth_prog_1, IPPROTO_TCP)) {
 		fprintf (stderr, "%s", "unable to register (OAUTH_PROG, OAUTH_VERS, tcp).");
 		exit(1);
-	}
-
-	if (argc < 5) {
-		printf ("usage: %s <clients_file> <resources_file> <permissions_file> <tokens_validity>\n", argv[0]);
-		exit (1);
 	}
 
 	// Extract the command line arguments

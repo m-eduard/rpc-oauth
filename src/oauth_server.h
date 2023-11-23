@@ -2,6 +2,9 @@
  *	- name of all the files needed to initialize the databases
  *  - number of operations that a token can be used until it becomes invalid
  */
+#include <string>
+#include <unordered_map>
+
 struct server_init_props {
     char *clients_file;
     char *resources_file;
@@ -16,6 +19,7 @@ struct user_data {
     int num_operations;
     bool auto_refresh;
     bool authorized;
+    std::unordered_map<std::string, std::string> permissions;
 };
 
 /* @param props: pointer to the files needed for initializing the DBes
@@ -27,3 +31,8 @@ void server_init(server_init_props *);
 
 #define USER_NOT_FOUND 1
 #define REQUEST_DENIED 2
+#define PERMISSION_DENIED 3
+#define TOKEN_EXPIRED 4
+#define RESOURCE_NOT_FOUND 5
+#define OPERATION_NOT_PERMITTED 6
+#define PERMISSION_GRANTED 7

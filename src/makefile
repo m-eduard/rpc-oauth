@@ -11,11 +11,11 @@ SOURCES_SVC.c =
 SOURCES_SVC.h = 
 SOURCES.x = oauth.x
 
-TARGETS_SVC.c = oauth_xdr.c oauth_svc.c
-TARGETS_SVC.cpp = oauth_server.cpp 
+TARGETS_SVC.c = oauth_xdr.c
+TARGETS_SVC.cpp = oauth_server.cpp oauth_svc.cpp
 TARGETS_CLNT.c = oauth_clnt.c oauth_xdr.c
 TARGETS_CLNT.cpp = oauth_client.cpp
-TARGETS = oauth.h oauth_xdr.c oauth_clnt.c oauth_svc.c oauth_client.cpp oauth_server.cpp
+TARGETS = oauth.h oauth_xdr.c oauth_clnt.c oauth_svc.cpp oauth_client.cpp oauth_server.cpp
 
 OBJECTS_CLNT = $(SOURCES_CLNT.c:%.c=%.o) $(TARGETS_CLNT.c:%.c=%.o) $(TARGETS_CLNT.cpp:%.cpp=%.o)
 OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o) $(TARGETS_SVC.cpp:%.cpp=%.o)

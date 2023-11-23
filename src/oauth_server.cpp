@@ -14,7 +14,8 @@
 
 // In-memory databases
 std::unordered_map<std::string, user_data> users;			// user_id -> user_data
-std::unordered_map<std::string, std::string> auth_tokens;	// token -> user_id
+std::unordered_map<std::string, std::string> auth_tokens;	// auth_token -> user_id
+std::unordered_map<std::string, std::string> access_tokens;	// access_token -> user_id
 std::unordered_set<std::string> resources;
 std::vector<std::unordered_map<std::string, std::string>> approvals;
 
@@ -22,6 +23,8 @@ int tokens_validity;
 int approvals_index = 0;
 
 void server_init(server_init_props *props) {
+	tokens_validity = props->tokens_validity;
+
 	std::vector<std::string> clients_lines;
 	get_lines_from_file(props->clients_file, true, clients_lines);
 
@@ -71,8 +74,6 @@ void server_init(server_init_props *props) {
 			permission.clear();
 		}
 	}
-
-	tokens_validity = props->tokens_validity;
 }
 
 
@@ -88,16 +89,17 @@ request_authorization_1_svc(request_authorization_props arg1,  struct svc_req *r
 	} else {
 		result.err = 0;
 
-		char *refresh_token = generate_access_token(arg1.client_id);
+		char *authorization_token = generate_access_token(arg1.client_id);
 
-		result.request_authorization_res_u.token = refresh_token;
+		result.request_authorization_res_u.token = authorization_token;
 
-		users[arg1.client_id].authorization_token = refresh_token;
+		users[arg1.client_id].authorization_token = authorization_token;
 		users[arg1.client_id].auto_refresh = arg1.auto_refresh;
+		users[arg1.client_id].num_operations = tokens_validity;
 
-		auth_tokens[refresh_token] = arg1.client_id;
+		auth_tokens[authorization_token] = arg1.client_id;
 
-		std::cout << "  RequestToken = " << refresh_token << std::endl;
+		std::cout << "  RequestToken = " << authorization_token << std::endl;
 	}
 
 	return &result;
@@ -114,6 +116,7 @@ approve_request_token_1_svc(approve_request_token_props arg1,  struct svc_req *r
 
 	// Store the result
 	users[auth_tokens[arg1.authorization_token]].authorized = result.was_signed;
+	users[auth_tokens[arg1.authorization_token]].permissions = approvals[approvals_index];
 
 	// Update the index of the current approval in FIFO order
 	approvals_index += 1;
@@ -133,6 +136,7 @@ request_access_token_1_svc(request_access_token_props arg1,  struct svc_req *rqs
 
 		users[arg1.client_id].access_token = generate_access_token(arg1.authorization_token);
 		std::cout << "  AccessToken = " << users[arg1.client_id].access_token << std::endl;
+		access_tokens[users[arg1.client_id].access_token] = arg1.client_id;
 
 		if (users[arg1.client_id].auto_refresh) {
 			users[arg1.client_id].refresh_token = generate_access_token(users[arg1.client_id].access_token);
@@ -165,7 +169,24 @@ validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct sv
 {
 	static validate_delegated_action_res  result;
 
-	
+	std::cout << arg1.access_token << " -> " << arg1.operation << " -> " << arg1.resource << std::endl;
+
+	if (access_tokens.find(arg1.access_token) == access_tokens.end()) {
+		result = PERMISSION_DENIED;
+	} else if (users[access_tokens[arg1.access_token]].num_operations == 0) {
+		result = TOKEN_EXPIRED;
+	} else if (resources.count(arg1.resource) == 0) {
+		result = RESOURCE_NOT_FOUND;
+	} else {
+		std::string permissions_on_resource = users[access_tokens[arg1.access_token]].permissions[arg1.resource];
+		users[access_tokens[arg1.access_token]].num_operations -= 1;
+
+		if (permissions_on_resource.find(operation_name[arg1.operation]) == std::string::npos) {
+			result = OPERATION_NOT_PERMITTED;
+		} else {
+			result = PERMISSION_GRANTED;
+		}
+	}
 
 	return &result;
 }

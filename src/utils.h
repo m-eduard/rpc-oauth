@@ -3,8 +3,18 @@
 #include <unistd.h>
 #include <iostream>
 #include <cstring>
+#include <string>
+#include <unordered_map>
 
 #define MACRO_RAW(x) #x
+
+std::unordered_map<std::string, std::string> operation_name = {
+	{"READ", "R"},
+	{"INSERT", "I"},
+	{"MODIFY", "M"},
+	{"DELETE", "D"},
+	{"EXECUTE", "X"},
+};
 
 void get_lines_from_file(char *file, bool has_num_lines, std::vector<std::string> &lines) {
 	char buffer[1024] = {0};

@@ -29,3 +29,8 @@ struct operation_props {
  * are compiled on the same machine */
 #define USER_NOT_FOUND 1
 #define REQUEST_DENIED 2
+#define PERMISSION_DENIED 3
+#define TOKEN_EXPIRED 4
+#define RESOURCE_NOT_FOUND 5
+#define OPERATION_NOT_PERMITTED 6
+#define PERMISSION_GRANTED 7

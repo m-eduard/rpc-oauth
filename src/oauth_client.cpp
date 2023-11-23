@@ -83,24 +83,44 @@ oauth_prog_1(char *host)
 			}
 		} else {
 			result_5 = validate_delegated_action_1((validate_delegated_action_props) {
+				.operation = (char *) operations[i].action.c_str(),
+				.resource = operations[i].resource,
 				.access_token = (char *) user_to_acces_token[operations[i].user_id].c_str(),
 			}, clnt);
 
 			if (result_5 == (validate_delegated_action_res *) NULL) {
 				clnt_perror (clnt, "call failed");
+			} else {
+				switch (*result_5) {
+					case PERMISSION_DENIED:
+						std::cout << MACRO_RAW(PERMISSION_DENIED) << std::endl;
+						break;
+					case TOKEN_EXPIRED:
+						std::cout << MACRO_RAW(TOKEN_EXPIRED) << std::endl;
+						break;
+					case RESOURCE_NOT_FOUND:
+						std::cout << MACRO_RAW(RESOURCE_NOT_FOUND) << std::endl;
+						break;
+					case OPERATION_NOT_PERMITTED:
+						std::cout << MACRO_RAW(OPERATION_NOT_PERMITTED) << std::endl;
+						break;
+					case PERMISSION_GRANTED:
+						std::cout << MACRO_RAW(PERMISSION_GRANTED) << std::endl;
+						break;
+				}
 			}
 
-			if (operations[i].action == READ) {
+			// if (operations[i].action == READ) {
 
-			} else if (operations[i].action == INSERT) {
+			// } else if (operations[i].action == INSERT) {
 
-			} else if (operations[i].action == MODIFY) {
+			// } else if (operations[i].action == MODIFY) {
 
-			} else if (operations[i].action == DELETE) {
+			// } else if (operations[i].action == DELETE) {
 
-			} else if (operations[i].action == EXECUTE) {
+			// } else if (operations[i].action == EXECUTE) {
 
-			}
+			// }
 		}
 	}
 
@@ -146,7 +166,10 @@ main (int argc, char *argv[])
 		if (operations[i].action == REQUEST) {
 			operations[i].automatic_refresh = resource_str == "true";
 		} else {
-			operations[i].resource = (char *) resource_str.c_str();
+			// resource_str is a local variable to this string, and storing a temporary
+			// pointer to the internal buffer of this string would make all the char*
+			// pointers in the operations vector point to the same buffer
+			operations[i].resource = strdup((char *) resource_str.c_str());
 		}
 	}
 
