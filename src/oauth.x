@@ -93,7 +93,10 @@ struct validate_delegated_action_props {
 
 /* VALIDATE_DELEGATED_ACTION returns just an error code, which is then checked
  * on the client side in order to see if the operation was successful or not */
-typedef int validate_delegated_action_res;
+struct validate_delegated_action_res {
+    int status;
+    token_t new_access_token;
+};
 
 program OAUTH_PROG {
     version OAUTH_VERS {

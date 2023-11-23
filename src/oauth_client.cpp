@@ -55,7 +55,7 @@ oauth_prog_1(char *host)
 					if (result_2 == (approve_request_token_res *) NULL) {
 						clnt_perror (clnt, "call failed");
 					} else {
-						// Request for an access and an optiional refresh token
+						// Request for an access and an optional refresh token
 						// (if the authorization token was generated with the
 						// automatic refresh option enabled)
 						result_3 = request_access_token_1((request_access_token_props) {
@@ -96,7 +96,12 @@ oauth_prog_1(char *host)
 			if (result_5 == (validate_delegated_action_res *) NULL) {
 				clnt_perror (clnt, "call failed");
 			} else {
-				switch (*result_5) {
+				// Update the access token, if it was refreshed on the server side
+				if (std::string(result_5->new_access_token) != "") {
+					user_to_acces_token[operations[i].user_id] = result_5->new_access_token;
+				}
+
+				switch (result_5->status) {
 					case PERMISSION_DENIED:
 						std::cout << MACRO_RAW(PERMISSION_DENIED) << std::endl;
 						break;

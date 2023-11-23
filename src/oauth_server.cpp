@@ -157,49 +157,131 @@ refresh_tokens_1_svc(refresh_tokens_props arg1,  struct svc_req *rqstp)
 {
 	static refresh_tokens_res  result;
 
-	/*
-	 * insert server code here
-	 */
 
 	return &result;
 }
+
+void refresh_tokens(std::string client_id) {
+	std::cout << "BEGIN " << client_id << " AUTHZ REFRESH" << std::endl;
+
+	// Remove the old access token
+	access_tokens.erase(users[client_id].access_token);
+
+	users[client_id].access_token = generate_access_token(users[client_id].refresh_token);
+	users[client_id].refresh_token = generate_access_token(users[client_id].access_token);
+	users[client_id].num_operations = tokens_validity;
+
+	// Update the access token with the client associated
+	access_tokens[users[client_id].access_token] = client_id;
+
+	std::cout << "  AccessToken = " << users[client_id].access_token << std::endl;
+	std::cout << "  RefreshToken = " << users[client_id].refresh_token << std::endl;
+}
+
+// validate_delegated_action_res *
+// validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct svc_req *rqstp)
+// {
+// 	static validate_delegated_action_res  result;
+// 	result = PERMISSION_GRANTED;
+
+// 	int remaining_operations = 0;
+// 	char *access_token = arg1.access_token;
+
+// 	if (access_tokens.find(arg1.access_token) == access_tokens.end()) {
+// 		result = PERMISSION_DENIED;
+// 	} else if (users[access_tokens[arg1.access_token]].num_operations == 0) {
+// 		if (users[access_tokens[arg1.access_token]].auto_refresh == false) {
+// 			result = TOKEN_EXPIRED;
+
+// 			// Remove the token from the database
+// 			users[access_tokens[arg1.access_token]].access_token = NULL;
+// 			access_tokens.erase(arg1.access_token);
+
+// 			access_token = (char *) "";
+// 		}
+// 	} else {
+// 		users[access_tokens[arg1.access_token]].num_operations -= 1;
+// 		remaining_operations = users[access_tokens[arg1.access_token]].num_operations;
+
+// 		if (resources.count(arg1.resource) == 0) {
+// 			result = RESOURCE_NOT_FOUND;
+// 		} else {
+// 			std::string permissions_on_resource = users[access_tokens[arg1.access_token]].permissions[arg1.resource];
+
+// 			if (permissions_on_resource.find(operation_name[arg1.operation]) == std::string::npos) {
+// 				result = OPERATION_NOT_PERMITTED;
+// 			} else {
+// 				result = PERMISSION_GRANTED;
+// 			}
+// 		}
+// 	}
+
+// 	if (result != PERMISSION_GRANTED) {
+// 		std::cout << "DENY (";
+// 	} else {
+// 		std::cout << "PERMIT (";
+// 	}
+
+// 	std::cout << arg1.operation << "," << arg1.resource << ","
+// 		<< access_token << "," << remaining_operations << ")" << std::endl;
+
+// 	return &result;
+// }
 
 validate_delegated_action_res *
 validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct svc_req *rqstp)
 {
 	static validate_delegated_action_res  result;
+	result.status = PERMISSION_GRANTED;
+	result.new_access_token = (char *) "";
 
 	int remaining_operations = 0;
 	char *access_token = arg1.access_token;
+	
 
 	if (access_tokens.find(arg1.access_token) == access_tokens.end()) {
-		result = PERMISSION_DENIED;
-	} else if (users[access_tokens[arg1.access_token]].num_operations == 0) {
-		result = TOKEN_EXPIRED;
-
-		// Remove the token from the database
-		users[access_tokens[arg1.access_token]].access_token = NULL;
-		access_tokens.erase(arg1.access_token);
-
-		access_token = (char *) "";
+		result.status = PERMISSION_DENIED;
 	} else {
-		users[access_tokens[arg1.access_token]].num_operations -= 1;
-		remaining_operations = users[access_tokens[arg1.access_token]].num_operations;
+		std::string user_id = access_tokens[arg1.access_token];
 
-		if (resources.count(arg1.resource) == 0) {
-			result = RESOURCE_NOT_FOUND;
-		} else {
-			std::string permissions_on_resource = users[access_tokens[arg1.access_token]].permissions[arg1.resource];
+		if (users[user_id].num_operations == 0) {
+			if (users[user_id].auto_refresh == false) {
+				result.status = TOKEN_EXPIRED;
 
-			if (permissions_on_resource.find(operation_name[arg1.operation]) == std::string::npos) {
-				result = OPERATION_NOT_PERMITTED;
+				// Remove the token from the database
+				users[user_id].access_token = NULL;
+				access_tokens.erase(arg1.access_token);
+
+				access_token = (char *) "";
 			} else {
-				result = PERMISSION_GRANTED;
+				refresh_tokens(user_id);
+
+				// Update the access token so it can be further used
+				access_token = users[user_id].access_token;
+				result.new_access_token = access_token;
+			}
+		}
+
+		if (result.status != TOKEN_EXPIRED) {
+			users[user_id].num_operations -= 1;
+			remaining_operations = users[user_id].num_operations;
+
+			if (resources.count(arg1.resource) == 0) {
+				result.status = RESOURCE_NOT_FOUND;
+			} else {
+				std::string permissions_on_resource = users[user_id].permissions[arg1.resource];
+
+				if (permissions_on_resource.find(operation_name[arg1.operation]) == std::string::npos) {
+					result.status = OPERATION_NOT_PERMITTED;
+				} else {
+					result.status = PERMISSION_GRANTED;
+				}
 			}
 		}
 	}
 
-	if (result != PERMISSION_GRANTED) {
+
+	if (result.status != PERMISSION_GRANTED) {
 		std::cout << "DENY (";
 	} else {
 		std::cout << "PERMIT (";
