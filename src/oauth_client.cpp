@@ -68,9 +68,14 @@ oauth_prog_1(char *host)
 						} else {
 							if (result_3->err == 0) {
 								std::cout << result_1->request_authorization_res_u.token <<
-									" -> " << result_3->request_access_token_res_u.tokens.access_token << std::endl;
+									" -> " << result_3->request_access_token_res_u.tokens.access_token;
 								user_to_acces_token[operations[i].user_id] =
 									result_3->request_access_token_res_u.tokens.access_token;
+								
+								if ((std::string)result_3->request_access_token_res_u.tokens.refresh_token != "")
+									std::cout << "," << result_3->request_access_token_res_u.tokens.refresh_token << std::endl;
+								else
+									std::cout << std::endl;
 							} else if (result_3->err == REQUEST_DENIED) {
 								std::cout << MACRO_RAW(REQUEST_DENIED) << std::endl;
 							}
@@ -164,7 +169,7 @@ main (int argc, char *argv[])
 		std::string resource_str = input_lines[i].substr(action + 1, resource - action - 1);
 
 		if (operations[i].action == REQUEST) {
-			operations[i].automatic_refresh = resource_str == "true";
+			operations[i].automatic_refresh = resource_str == "1";
 		} else {
 			// resource_str is a local variable to this string, and storing a temporary
 			// pointer to the internal buffer of this string would make all the char*
