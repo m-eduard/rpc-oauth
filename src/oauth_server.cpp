@@ -170,11 +170,18 @@ validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct sv
 	static validate_delegated_action_res  result;
 
 	int remaining_operations = 0;
+	char *access_token = arg1.access_token;
 
 	if (access_tokens.find(arg1.access_token) == access_tokens.end()) {
 		result = PERMISSION_DENIED;
 	} else if (users[access_tokens[arg1.access_token]].num_operations == 0) {
 		result = TOKEN_EXPIRED;
+
+		// Remove the token from the database
+		users[access_tokens[arg1.access_token]].access_token = NULL;
+		access_tokens.erase(arg1.access_token);
+
+		access_token = (char *) "";
 	} else {
 		users[access_tokens[arg1.access_token]].num_operations -= 1;
 		remaining_operations = users[access_tokens[arg1.access_token]].num_operations;
@@ -199,7 +206,7 @@ validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct sv
 	}
 
 	std::cout << arg1.operation << "," << arg1.resource << ","
-		<< arg1.access_token << "," << remaining_operations << ")" << std::endl;
+		<< access_token << "," << remaining_operations << ")" << std::endl;
 
 	return &result;
 }
