@@ -86,7 +86,10 @@ struct validate_delegated_action_props {
 };
 typedef struct validate_delegated_action_props validate_delegated_action_props;
 
-typedef int validate_delegated_action_res;
+struct validate_delegated_action_res {
+	int status;
+};
+typedef struct validate_delegated_action_res validate_delegated_action_res;
 
 #define OAUTH_PROG 0x31234567
 #define OAUTH_VERS 1

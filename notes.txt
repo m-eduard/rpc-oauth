@@ -44,7 +44,8 @@
 
 # User final
 
-* approve <Request Token>
+* approve <Request Token> | asta e de fapt o simpla citire din fisier, in momentul in care trebuie
+  sa se genereze un nou token de acces si nu e vb de refresh
   - primeste tokenul de autorizare a cererii de acces
   - ataseaza setul de permisiuni pentru fiecare resursa de pe server
   - marcheaza jetonul ca fiind semnat??
@@ -73,3 +74,4 @@ OBSERVATII:
 - f(UserID)           = token autorizare cerere de acces
 - f(token autorizare) = token de acces
 - f(token de acces)   = token de refresh
+- f(token refresh)    = noul token de acces (probabil??)

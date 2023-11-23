@@ -4,7 +4,7 @@ SERVICE="oauth"
 make -f "makefile" clean
 
 # Override the current makefile
-rm -f "makefile"
+rm -f "Makefile.$SERVICE"
 rpcgen -NC "$SERVICE.x"
 cp "../valid_makefile" "makefile"
 

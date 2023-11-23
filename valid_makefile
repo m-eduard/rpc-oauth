@@ -11,17 +11,23 @@ SOURCES_SVC.c =
 SOURCES_SVC.h = 
 SOURCES.x = oauth.x
 
-TARGETS_SVC.c = oauth_svc.c oauth_xdr.c 
-TARGETS_SVC.cpp = oauth_server.cpp
+TARGETS_SVC.c = oauth_xdr.c 
+TARGETS_SVC.cpp = oauth_server.cpp oauth_svc.cpp
 TARGETS_CLNT.c = oauth_clnt.c oauth_client.c oauth_xdr.c 
-TARGETS = oauth.h oauth_xdr.c oauth_clnt.c oauth_svc.c oauth_client.c oauth_server.cpp
+TARGETS = oauth.h oauth_xdr.c oauth_clnt.c oauth_svc.cpp oauth_client.c oauth_server.cpp
 
 OBJECTS_CLNT = $(SOURCES_CLNT.c:%.c=%.o) $(TARGETS_CLNT.c:%.c=%.o)
 OBJECTS_SVC = $(SOURCES_SVC.c:%.c=%.o) $(TARGETS_SVC.c:%.c=%.o) $(TARGETS_SVC.cpp:%.cpp=%.o)
 # Compiler flags 
 
-CFLAGS += -g -I/usr/include/tirpc
-CXXFLAGS += -g -I/usr/include/tirpc
+# Used g++ as C compiler in order to avoid getting a linking error
+# when the oauth_server is created, because when cc tried to link
+# the object files together, oauth_server.o couuld not be linked because
+# of unknown reference to unordered_set
+CC=g++
+
+CFLAGS += -g -I/usr/include/tirpc -std=c++11
+CXXFLAGS += -g -I/usr/include/tirpc -std=c++11
 LDLIBS += -lnsl -ltirpc
 RPCGENFLAGS = -NC
 
