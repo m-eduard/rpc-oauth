@@ -74,7 +74,7 @@ struct refresh_tokens_props {
 };
 
 /* REFRESH_TOKENS returns a new access token and a new refresh token
- * if the received authorization token is signed, otherwise an error */
+ * if the received refresh token is valid, otherwise an error */
 union refresh_tokens_res switch (int err) {
     case 0:
         bearer_tokens_t tokens;
@@ -95,7 +95,6 @@ struct validate_delegated_action_props {
  * on the client side in order to see if the operation was successful or not */
 struct validate_delegated_action_res {
     int status;
-    token_t new_access_token;
 };
 
 program OAUTH_PROG {

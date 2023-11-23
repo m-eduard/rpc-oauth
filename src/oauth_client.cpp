@@ -12,6 +12,7 @@
 
 std::vector<operation_props> operations;
 std::unordered_map<std::string, std::string> user_to_acces_token;
+std::unordered_map<std::string, std::string> user_to_refresh_token;
 
 void
 oauth_prog_1(char *host)
@@ -72,9 +73,11 @@ oauth_prog_1(char *host)
 								user_to_acces_token[operations[i].user_id] =
 									result_3->request_access_token_res_u.tokens.access_token;
 								
-								if ((std::string)result_3->request_access_token_res_u.tokens.refresh_token != "")
+								if ((std::string)result_3->request_access_token_res_u.tokens.refresh_token != "") {
 									std::cout << "," << result_3->request_access_token_res_u.tokens.refresh_token << std::endl;
-								else
+									user_to_refresh_token[operations[i].user_id] =
+										result_3->request_access_token_res_u.tokens.refresh_token;
+								} else
 									std::cout << std::endl;
 							} else if (result_3->err == REQUEST_DENIED) {
 								std::cout << MACRO_RAW(REQUEST_DENIED) << std::endl;
@@ -87,60 +90,65 @@ oauth_prog_1(char *host)
 				}
 			}
 		} else {
-			result_5 = validate_delegated_action_1((validate_delegated_action_props) {
-				.operation = (char *) operations[i].action.c_str(),
-				.resource = operations[i].resource,
-				.access_token = (char *) user_to_acces_token[operations[i].user_id].c_str(),
-			}, clnt);
+			bool reload = true;
 
-			if (result_5 == (validate_delegated_action_res *) NULL) {
-				clnt_perror (clnt, "call failed");
-			} else {
-				// Update the access token, if it was refreshed on the server side
-				if (std::string(result_5->new_access_token) != "") {
-					user_to_acces_token[operations[i].user_id] = result_5->new_access_token;
-				}
+			while (reload) {
+				reload = false;
+				result_5 = validate_delegated_action_1((validate_delegated_action_props) {
+					.operation = (char *) operations[i].action.c_str(),
+					.resource = operations[i].resource,
+					.access_token = (char *) user_to_acces_token[operations[i].user_id].c_str(),
+				}, clnt);
 
-				switch (result_5->status) {
-					case PERMISSION_DENIED:
-						std::cout << MACRO_RAW(PERMISSION_DENIED) << std::endl;
-						break;
-					case TOKEN_EXPIRED:
-						std::cout << MACRO_RAW(TOKEN_EXPIRED) << std::endl;
-						break;
-					case RESOURCE_NOT_FOUND:
-						std::cout << MACRO_RAW(RESOURCE_NOT_FOUND) << std::endl;
-						break;
-					case OPERATION_NOT_PERMITTED:
-						std::cout << MACRO_RAW(OPERATION_NOT_PERMITTED) << std::endl;
-						break;
-					case PERMISSION_GRANTED:
-						std::cout << MACRO_RAW(PERMISSION_GRANTED) << std::endl;
-						break;
+				if (result_5 == (validate_delegated_action_res *) NULL) {
+					clnt_perror (clnt, "call failed");
+				} else {
+					switch (result_5->status) {
+						case PERMISSION_DENIED:
+							std::cout << MACRO_RAW(PERMISSION_DENIED) << std::endl;
+							break;
+						case TOKEN_EXPIRED:
+							std::cout << MACRO_RAW(TOKEN_EXPIRED) << std::endl;
+							break;
+						case RESOURCE_NOT_FOUND:
+							std::cout << MACRO_RAW(RESOURCE_NOT_FOUND) << std::endl;
+							break;
+						case OPERATION_NOT_PERMITTED:
+							std::cout << MACRO_RAW(OPERATION_NOT_PERMITTED) << std::endl;
+							break;
+						case PERMISSION_GRANTED:
+							std::cout << MACRO_RAW(PERMISSION_GRANTED) << std::endl;
+							break;
+						case REQUIRE_REFRESH:
+							// Request for a new access token, using the refresh token
+							result_4 = refresh_tokens_1((refresh_tokens_props) {
+								.refresh_token = (char *) user_to_refresh_token[operations[i].user_id].c_str(),
+							}, clnt);
+
+							if (result_4 == (refresh_tokens_res *) NULL) {
+								clnt_perror (clnt, "call failed");
+							} else {
+								if (result_4->err == 0) {
+									user_to_acces_token[operations[i].user_id] = result_4->refresh_tokens_res_u.tokens.access_token;
+									user_to_refresh_token[operations[i].user_id] = result_4->refresh_tokens_res_u.tokens.refresh_token;
+
+									// Redo the operation, with the new access token
+									reload = true;
+								}
+							}
+
+							break;
+					}
 				}
 			}
-
-			// if (operations[i].action == READ) {
-
-			// } else if (operations[i].action == INSERT) {
-
-			// } else if (operations[i].action == MODIFY) {
-
-			// } else if (operations[i].action == DELETE) {
-
-			// } else if (operations[i].action == EXECUTE) {
-
-			// }
+			
 		}
 	}
 
 	
 	
 	
-	// result_4 = refresh_tokens_1(refresh_tokens_1_arg1, clnt);
-	// if (result_4 == (refresh_tokens_res *) NULL) {
-	// 	clnt_perror (clnt, "call failed");
-	// }
+	
 	
 
 	clnt_destroy (clnt);

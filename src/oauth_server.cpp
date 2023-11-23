@@ -13,9 +13,10 @@
 #include <iostream>
 
 // In-memory databases
-std::unordered_map<std::string, user_data> users;			// user_id -> user_data
-std::unordered_map<std::string, std::string> auth_tokens;	// auth_token -> user_id
-std::unordered_map<std::string, std::string> access_tokens;	// access_token -> user_id
+std::unordered_map<std::string, user_data> users;				// user_id -> user_data
+std::unordered_map<std::string, std::string> auth_tokens;		// auth_token -> user_id
+std::unordered_map<std::string, std::string> access_tokens;		// access_token -> user_id
+std::unordered_map<std::string, std::string> refresh_tokens;	// refresh_token -> user_id
 std::unordered_set<std::string> resources;
 std::vector<std::unordered_map<std::string, std::string>> approvals;
 
@@ -141,6 +142,7 @@ request_access_token_1_svc(request_access_token_props arg1,  struct svc_req *rqs
 		if (users[arg1.client_id].auto_refresh) {
 			users[arg1.client_id].refresh_token = generate_access_token(users[arg1.client_id].access_token);
 			std::cout << "  RefreshToken = " << users[arg1.client_id].refresh_token << std::endl;
+			refresh_tokens[users[arg1.client_id].refresh_token] = arg1.client_id;
 		} else {
 			users[arg1.client_id].refresh_token = (char *) "";
 		}
@@ -157,83 +159,41 @@ refresh_tokens_1_svc(refresh_tokens_props arg1,  struct svc_req *rqstp)
 {
 	static refresh_tokens_res  result;
 
+	if (refresh_tokens.count(arg1.refresh_token) == 0) {
+		result.err = INVALID_REFRESH_TOKEN;
+		return &result;
+	}
 
-	return &result;
-}
+	std::string client_id = refresh_tokens[arg1.refresh_token];
 
-void refresh_tokens(std::string client_id) {
 	std::cout << "BEGIN " << client_id << " AUTHZ REFRESH" << std::endl;
 
 	// Remove the old access token
 	access_tokens.erase(users[client_id].access_token);
+	refresh_tokens.erase(users[client_id].refresh_token);
 
-	users[client_id].access_token = generate_access_token(users[client_id].refresh_token);
+	users[client_id].access_token = generate_access_token(arg1.refresh_token);
 	users[client_id].refresh_token = generate_access_token(users[client_id].access_token);
 	users[client_id].num_operations = tokens_validity;
 
 	// Update the access token with the client associated
 	access_tokens[users[client_id].access_token] = client_id;
+	refresh_tokens[users[client_id].refresh_token] = client_id;
 
 	std::cout << "  AccessToken = " << users[client_id].access_token << std::endl;
 	std::cout << "  RefreshToken = " << users[client_id].refresh_token << std::endl;
+
+	result.refresh_tokens_res_u.tokens.access_token = users[client_id].access_token;
+	result.refresh_tokens_res_u.tokens.refresh_token = users[client_id].refresh_token;
+
+	return &result;
 }
-
-// validate_delegated_action_res *
-// validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct svc_req *rqstp)
-// {
-// 	static validate_delegated_action_res  result;
-// 	result = PERMISSION_GRANTED;
-
-// 	int remaining_operations = 0;
-// 	char *access_token = arg1.access_token;
-
-// 	if (access_tokens.find(arg1.access_token) == access_tokens.end()) {
-// 		result = PERMISSION_DENIED;
-// 	} else if (users[access_tokens[arg1.access_token]].num_operations == 0) {
-// 		if (users[access_tokens[arg1.access_token]].auto_refresh == false) {
-// 			result = TOKEN_EXPIRED;
-
-// 			// Remove the token from the database
-// 			users[access_tokens[arg1.access_token]].access_token = NULL;
-// 			access_tokens.erase(arg1.access_token);
-
-// 			access_token = (char *) "";
-// 		}
-// 	} else {
-// 		users[access_tokens[arg1.access_token]].num_operations -= 1;
-// 		remaining_operations = users[access_tokens[arg1.access_token]].num_operations;
-
-// 		if (resources.count(arg1.resource) == 0) {
-// 			result = RESOURCE_NOT_FOUND;
-// 		} else {
-// 			std::string permissions_on_resource = users[access_tokens[arg1.access_token]].permissions[arg1.resource];
-
-// 			if (permissions_on_resource.find(operation_name[arg1.operation]) == std::string::npos) {
-// 				result = OPERATION_NOT_PERMITTED;
-// 			} else {
-// 				result = PERMISSION_GRANTED;
-// 			}
-// 		}
-// 	}
-
-// 	if (result != PERMISSION_GRANTED) {
-// 		std::cout << "DENY (";
-// 	} else {
-// 		std::cout << "PERMIT (";
-// 	}
-
-// 	std::cout << arg1.operation << "," << arg1.resource << ","
-// 		<< access_token << "," << remaining_operations << ")" << std::endl;
-
-// 	return &result;
-// }
 
 validate_delegated_action_res *
 validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct svc_req *rqstp)
 {
 	static validate_delegated_action_res  result;
 	result.status = PERMISSION_GRANTED;
-	result.new_access_token = (char *) "";
 
 	int remaining_operations = 0;
 	char *access_token = arg1.access_token;
@@ -254,15 +214,9 @@ validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct sv
 
 				access_token = (char *) "";
 			} else {
-				refresh_tokens(user_id);
-
-				// Update the access token so it can be further used
-				access_token = users[user_id].access_token;
-				result.new_access_token = access_token;
+				result.status = REQUIRE_REFRESH;
 			}
-		}
-
-		if (result.status != TOKEN_EXPIRED) {
+		} else {
 			users[user_id].num_operations -= 1;
 			remaining_operations = users[user_id].num_operations;
 
@@ -281,15 +235,20 @@ validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct sv
 		}
 	}
 
+	// If the refresh is required, then don't log the status of the
+	// current delegated action, since it will be reloaded once the
+	// client requests a new pair of <refresh, access> tokens
+	if (result.status != REQUIRE_REFRESH) {
+		if (result.status != PERMISSION_GRANTED) {
+			std::cout << "DENY (";
+		} else {
+			std::cout << "PERMIT (";
+		}
 
-	if (result.status != PERMISSION_GRANTED) {
-		std::cout << "DENY (";
-	} else {
-		std::cout << "PERMIT (";
+		std::cout << arg1.operation << "," << arg1.resource << ","
+			<< access_token << "," << remaining_operations << ")" << std::endl;
 	}
-
-	std::cout << arg1.operation << "," << arg1.resource << ","
-		<< access_token << "," << remaining_operations << ")" << std::endl;
+	
 
 	return &result;
 }
