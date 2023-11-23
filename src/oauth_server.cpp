@@ -169,24 +169,37 @@ validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct sv
 {
 	static validate_delegated_action_res  result;
 
-	std::cout << arg1.access_token << " -> " << arg1.operation << " -> " << arg1.resource << std::endl;
+	int remaining_operations = 0;
 
 	if (access_tokens.find(arg1.access_token) == access_tokens.end()) {
 		result = PERMISSION_DENIED;
 	} else if (users[access_tokens[arg1.access_token]].num_operations == 0) {
 		result = TOKEN_EXPIRED;
-	} else if (resources.count(arg1.resource) == 0) {
-		result = RESOURCE_NOT_FOUND;
 	} else {
-		std::string permissions_on_resource = users[access_tokens[arg1.access_token]].permissions[arg1.resource];
 		users[access_tokens[arg1.access_token]].num_operations -= 1;
+		remaining_operations = users[access_tokens[arg1.access_token]].num_operations;
 
-		if (permissions_on_resource.find(operation_name[arg1.operation]) == std::string::npos) {
-			result = OPERATION_NOT_PERMITTED;
+		if (resources.count(arg1.resource) == 0) {
+			result = RESOURCE_NOT_FOUND;
 		} else {
-			result = PERMISSION_GRANTED;
+			std::string permissions_on_resource = users[access_tokens[arg1.access_token]].permissions[arg1.resource];
+
+			if (permissions_on_resource.find(operation_name[arg1.operation]) == std::string::npos) {
+				result = OPERATION_NOT_PERMITTED;
+			} else {
+				result = PERMISSION_GRANTED;
+			}
 		}
 	}
+
+	if (result != PERMISSION_GRANTED) {
+		std::cout << "DENY (";
+	} else {
+		std::cout << "PERMIT (";
+	}
+
+	std::cout << arg1.operation << "," << arg1.resource << ","
+		<< arg1.access_token << "," << remaining_operations << ")" << std::endl;
 
 	return &result;
 }
