@@ -271,7 +271,8 @@ validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct sv
 			} else {
 				std::string permissions_on_resource = users[user_id].permissions[arg1.resource];
 
-				if (permissions_on_resource.find(operation_name[arg1.operation]) == std::string::npos) {
+				if (operation_name.count(arg1.operation) == 0 ||
+					permissions_on_resource.find(operation_name[arg1.operation]) == std::string::npos) {
 					result.status = OPERATION_NOT_PERMITTED;
 				} else {
 					result.status = PERMISSION_GRANTED;
