@@ -170,7 +170,7 @@ refresh_tokens_1_svc(refresh_tokens_props arg1,  struct svc_req *rqstp)
 
 	std::cout << "BEGIN " << client_id << " AUTHZ REFRESH" << std::endl;
 
-	// Remove the old access token
+	// Remove the old access and refresh tokens
 	access_tokens.erase(users[client_id].access_token);
 	refresh_tokens.erase(users[client_id].refresh_token);
 
@@ -195,6 +195,9 @@ validate_delegated_action_res *
 validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct svc_req *rqstp)
 {
 	static validate_delegated_action_res  result;
+
+	// @result is a static variable, so the initialization
+	// on declaration will happen only once at the runtime
 	result.status = PERMISSION_GRANTED;
 
 	int remaining_operations = 0;
