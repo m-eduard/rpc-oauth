@@ -15,6 +15,7 @@ typedef string token_t<>;
 typedef string operation_t<>;
 typedef string resource_t<>;
 
+/* Struct containing both the access and refresh tokens */
 struct bearer_tokens_t {
     token_t access_token;
     token_t refresh_token;

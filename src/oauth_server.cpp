@@ -79,7 +79,6 @@ void server_init(server_init_props *props) {
 	}
 }
 
-
 request_authorization_res *
 request_authorization_1_svc(request_authorization_props arg1,  struct svc_req *rqstp)
 {
@@ -149,6 +148,7 @@ request_access_token_1_svc(request_access_token_props arg1,  struct svc_req *rqs
 			users[arg1.client_id].refresh_token = (char *) "";
 		}
 
+		// Store the generated tokens in the result returned to client
 		result.request_access_token_res_u.tokens.access_token = users[arg1.client_id].access_token;
 		result.request_access_token_res_u.tokens.refresh_token = users[arg1.client_id].refresh_token;
 	}
@@ -185,6 +185,7 @@ refresh_tokens_1_svc(refresh_tokens_props arg1,  struct svc_req *rqstp)
 	std::cout << "  AccessToken = " << users[client_id].access_token << std::endl;
 	std::cout << "  RefreshToken = " << users[client_id].refresh_token << std::endl;
 
+	// Store the refreshed tokens in the result returned to client
 	result.refresh_tokens_res_u.tokens.access_token = users[client_id].access_token;
 	result.refresh_tokens_res_u.tokens.refresh_token = users[client_id].refresh_token;
 
@@ -202,13 +203,14 @@ validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct sv
 
 	int remaining_operations = 0;
 	char *access_token = arg1.access_token;
-	
 
 	if (access_tokens.find(arg1.access_token) == access_tokens.end()) {
 		result.status = PERMISSION_DENIED;
 	} else {
 		std::string user_id = access_tokens[arg1.access_token];
 
+		// Check if there are any remaining operations that can be
+		// done using the current access token
 		if (users[user_id].num_operations == 0) {
 			if (users[user_id].auto_refresh == false) {
 				result.status = TOKEN_EXPIRED;
@@ -230,6 +232,8 @@ validate_delegated_action_1_svc(validate_delegated_action_props arg1,  struct sv
 			} else {
 				std::string permissions_on_resource = users[user_id].permissions[arg1.resource];
 
+				// Check if the client has the permission to performe the
+				// requested operation on this specific resource
 				if (operation_name.count(arg1.operation) == 0 ||
 					permissions_on_resource.find(operation_name[arg1.operation]) == std::string::npos) {
 					result.status = OPERATION_NOT_PERMITTED;
